@@ -885,7 +885,6 @@ const state = {
   accountTab: "saved",
   profileTab: "projects",
   menuOpen: false,
-  searchOpen: false,
   passwordVisible: false,
   toast: "",
 };
@@ -1020,46 +1019,6 @@ function SearchBox(context = "") {
   `;
 }
 
-function HomeSearchBox() {
-  const history = getSearchHistory();
-  const suggestions = state.service
-    ? serviceKeys.filter((key) => key !== state.service)
-    : serviceKeys.slice(1, 5);
-  return `
-    <form class="home-search-panel ${state.searchOpen ? "is-open" : ""}" data-form="search">
-      <div class="home-search-row">
-        <label>
-          ${icon("search")}
-          <input type="hidden" name="service" value="${state.service}" />
-          <button class="home-service-trigger" type="button" aria-label="${t("search.service")}">
-            <span>${state.service ? t(`services.${state.service}`) : t("search.servicePlaceholder")}</span>
-            ${icon("chevron")}
-          </button>
-        </label>
-        <label>
-          ${icon("pin")}
-          <input name="postal" value="${state.postal}" placeholder="90017" />
-        </label>
-        <button class="home-search-submit" type="submit" aria-label="${t("search.button")}">${icon("search")}</button>
-      </div>
-      <div class="home-search-dropdown">
-        ${
-          history.length
-            ? `<div class="search-history">
-                <span>${state.lang === "en" ? "Recent searches" : "历史记录"}</span>
-                <button type="button" data-action="clear-history">${state.lang === "en" ? "Clear" : "清空"}</button>
-                <div>${history.map((item) => `<button type="button" data-history="${item.service}" data-postal="${item.postal}">${item.label}</button>`).join("")}</div>
-              </div>`
-            : `<p class="empty-history">${state.lang === "en" ? "No recent searches" : "暂无历史记录"}</p>`
-        }
-        <div class="suggestion-list">
-          ${suggestions.map((key) => `<button type="button" data-search-service="${key}">${t(`services.${key}`)}</button>`).join("")}
-        </div>
-      </div>
-    </form>
-  `;
-}
-
 function HomePage() {
   return `
     <main>
@@ -1068,7 +1027,6 @@ function HomePage() {
           <p class="eyebrow">${t("hero.eyebrow")}</p>
           <h1>${t("home.heroTitle")}</h1>
           <p>${t("home.heroCopy")}</p>
-          ${HomeSearchBox()}
         </div>
         <div class="home-hero-media">
           <img src="./src/assets/hero-renovation.png" alt="${t("hero.imageCaption")}" />
@@ -1737,15 +1695,6 @@ function bindEvents() {
     });
   });
 
-  app.querySelectorAll("[data-search-service]").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      state.service = button.dataset.searchService;
-      state.searchOpen = true;
-      render();
-    });
-  });
-
   app.querySelectorAll("[data-form='search']").forEach((form) => {
     form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -1753,35 +1702,8 @@ function bindEvents() {
       state.service = formData.get("service") || "";
         state.postal = formData.get("postal") || "";
         addSearchHistory(state.service, state.postal);
-        state.searchOpen = false;
         setRoute("search");
       });
-  });
-
-  app.querySelectorAll(".home-search-panel").forEach((panel) => {
-    panel.addEventListener("focusin", () => {
-      state.searchOpen = true;
-      panel.classList.add("is-open");
-    });
-    panel.addEventListener("click", () => {
-      state.searchOpen = true;
-      panel.classList.add("is-open");
-    });
-  });
-
-  app.querySelectorAll("[data-action='clear-history']").forEach((button) => {
-    button.addEventListener("click", () => {
-      localStorage.removeItem("topbuilder:search-history");
-      render();
-    });
-  });
-
-  app.querySelectorAll("[data-history]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.service = button.dataset.history || "";
-      state.postal = button.dataset.postal || "";
-      setRoute("search");
-    });
   });
 
   app.querySelectorAll("[data-action='toggle-language']").forEach((button) => {
