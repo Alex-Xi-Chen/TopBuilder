@@ -1108,7 +1108,7 @@ function setToast(message) {
 function Logo() {
   return `
     <button class="logo" data-route="home" aria-label="TopBuilder">
-      <img src="./src/assets/logo.svg" alt="${t("brandAlt")}" />
+      <img src="./src/assets/logo.png" alt="${t("brandAlt")}" />
     </button>
   `;
 }
@@ -1526,7 +1526,7 @@ function AuthPage() {
     <main class="auth-page auth-screen">
       <button class="auth-back" data-route="home" aria-label="${t("auth.back")}">${icon("arrow")}</button>
       <section class="auth-panel auth-card">
-        <img class="auth-logo-mark" src="./src/assets/logo-mark.svg" alt="${t("brandAlt")}" />
+        <img class="auth-logo-mark" src="./src/assets/logo-mark.png" alt="${t("brandAlt")}" />
         <h1>${isLogin ? t("auth.loginTitle") : t("auth.registerTitle")}</h1>
         ${!firebaseReady ? `<p class="auth-notice">${t("auth.configuredRequired")}</p>` : ""}
         <form class="auth-form" data-form="auth">

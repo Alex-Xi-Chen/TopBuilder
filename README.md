@@ -12,7 +12,7 @@ Live site: https://topbuilderhome.com/
 - Real homeowner sign up, email/password login, Google login, password reset, and profile storage with Firebase
 - Saved contractor/account area
 - Contractor onboarding form
-- Professional project imagery and Top Builder branding
+- Professional project imagery and TopBuilder branding
 - Responsive desktop and mobile layout
 
 ## Local Development
