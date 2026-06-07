@@ -1,3 +1,24 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+import {
+  doc,
+  getDoc,
+  getFirestore,
+  serverTimestamp,
+  setDoc,
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { firebaseConfig } from "../firebase-config.js?v=auth-20260606";
+
 const serviceKeys = ["home", "kitchen", "bathroom", "basement", "addition", "commercial"];
 
 const projectImages = {
@@ -138,6 +159,13 @@ const i18n = {
       send: "Send confirmation email",
       forgot: "Forgot password?",
       resetSent: "Password reset email sent.",
+      configuredRequired: "Firebase is not configured yet. Add your Firebase project settings in firebase-config.js.",
+      loginSuccess: "You are signed in.",
+      registerSuccess: "Your account has been created.",
+      googleSuccess: "Google sign-in complete.",
+      logoutSuccess: "You are signed out.",
+      passwordMismatch: "Passwords do not match.",
+      working: "Working...",
     },
     account: {
       owner: "Homeowner",
@@ -147,6 +175,13 @@ const i18n = {
       savedTitle: "Saved contractors",
       messagesCopy: "M2 Tile & Stone received your kitchen remodel request. Northline Build Co. asked for your preferred start date.",
       saveProfile: "Save profile",
+      signOut: "Sign out",
+      signedInAs: "Signed in as",
+      provider: "Provider",
+      email: "Email",
+      name: "Name",
+      noName: "TopBuilder member",
+      profileSaved: "Profile saved.",
     },
     community: {
       title: "Project stories and ideas",
@@ -364,6 +399,13 @@ const i18n = {
       send: "发送确认邮件",
       forgot: "忘记密码？",
       resetSent: "密码重置邮件已发送。",
+      configuredRequired: "Firebase 尚未配置。请在 firebase-config.js 中添加您的 Firebase 项目设置。",
+      loginSuccess: "登录成功。",
+      registerSuccess: "账户已创建。",
+      googleSuccess: "Google 登录成功。",
+      logoutSuccess: "已退出登录。",
+      passwordMismatch: "两次输入的密码不一致。",
+      working: "处理中...",
     },
     account: {
       owner: "屋主",
@@ -373,6 +415,13 @@ const i18n = {
       savedTitle: "收藏的承包商",
       messagesCopy: "M2 Tile & Stone 已收到您的厨房翻新咨询。Northline Build Co. 请求补充预计开工时间。",
       saveProfile: "保存资料",
+      signOut: "退出登录",
+      signedInAs: "当前登录",
+      provider: "登录方式",
+      email: "邮箱",
+      name: "姓名",
+      noName: "TopBuilder 用户",
+      profileSaved: "资料已保存。",
     },
     community: {
       title: "案例分享和装修灵感",
@@ -887,10 +936,19 @@ const state = {
   menuOpen: false,
   passwordVisible: false,
   toast: "",
+  authReady: false,
+  authPending: false,
+  authUser: null,
+  userProfile: null,
 };
 
 const app = document.querySelector("#app");
 const $ = (selector, parent = document) => parent.querySelector(selector);
+const firebaseReady = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId);
+const firebaseApp = firebaseReady ? initializeApp(firebaseConfig) : null;
+const auth = firebaseReady ? getAuth(firebaseApp) : null;
+const db = firebaseReady ? getFirestore(firebaseApp) : null;
+const googleProvider = firebaseReady ? new GoogleAuthProvider() : null;
 
 function t(path) {
   return path.split(".").reduce((value, key) => value?.[key], i18n[state.lang]) ?? path;
@@ -899,6 +957,96 @@ function t(path) {
 function localized(value) {
   if (typeof value === "string") return value;
   return value[state.lang] ?? value.en ?? "";
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[char]));
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+function displayNameFromUser(user) {
+  return user?.displayName || user?.email?.split("@")[0] || t("account.noName");
+}
+
+function userInitial(user) {
+  return displayNameFromUser(user).trim().charAt(0).toUpperCase() || "T";
+}
+
+function authProviderLabel(user) {
+  const provider = user?.providerData?.[0]?.providerId || "password";
+  if (provider.includes("google")) return "Google";
+  if (provider.includes("password")) return "Email";
+  return provider;
+}
+
+function mapAuthError(error) {
+  const code = error?.code || "";
+  const messages = {
+    "auth/email-already-in-use": state.lang === "en" ? "This email is already registered." : "该邮箱已注册。",
+    "auth/invalid-email": state.lang === "en" ? "Enter a valid email address." : "请输入有效邮箱。",
+    "auth/invalid-credential": state.lang === "en" ? "Email or password is incorrect." : "邮箱或密码不正确。",
+    "auth/popup-closed-by-user": state.lang === "en" ? "Google sign-in was cancelled." : "已取消 Google 登录。",
+    "auth/weak-password": state.lang === "en" ? "Use at least 6 characters for your password." : "密码至少需要 6 位字符。",
+  };
+  return messages[code] || error?.message || (state.lang === "en" ? "Authentication failed." : "认证失败。");
+}
+
+async function saveUserProfile(user, extra = {}) {
+  if (!db || !user) return null;
+  const profileRef = doc(db, "users", user.uid);
+  const payload = {
+    uid: user.uid,
+    name: extra.name || user.displayName || user.email?.split("@")[0] || "",
+    email: user.email || "",
+    photoURL: user.photoURL || "",
+    provider: authProviderLabel(user),
+    updatedAt: serverTimestamp(),
+  };
+  try {
+    const existing = await getDoc(profileRef);
+    if (!existing.exists()) payload.createdAt = serverTimestamp();
+    await setDoc(profileRef, payload, { merge: true });
+    return { ...(existing.exists() ? existing.data() : {}), ...payload, ...extra };
+  } catch {
+    return { ...payload, ...extra };
+  }
+}
+
+async function loadUserProfile(user) {
+  if (!db || !user) return null;
+  const profileRef = doc(db, "users", user.uid);
+  try {
+    const snapshot = await getDoc(profileRef);
+    return snapshot.exists() ? snapshot.data() : saveUserProfile(user);
+  } catch {
+    return saveUserProfile(user);
+  }
+}
+
+async function runAuthAction(action) {
+  if (!firebaseReady || !auth) {
+    setToast(t("auth.configuredRequired"));
+    return;
+  }
+  state.authPending = true;
+  render();
+  try {
+    await action();
+  } catch (error) {
+    setToast(mapAuthError(error));
+  } finally {
+    state.authPending = false;
+    render();
+  }
 }
 
 function getSearchHistory() {
@@ -981,7 +1129,7 @@ function Nav() {
         <div class="nav-actions">
           <button class="icon-only utility" data-action="toggle-language" aria-label="${t("otherLanguage")}">${icon("globe")}</button>
           <button class="icon-only utility" type="button" aria-label="${t("nav.notifications")}">${icon("bell")}</button>
-          <button class="icon-only utility" data-route="login" aria-label="${t("nav.account")}">${icon("user")}</button>
+          <button class="icon-only utility" data-route="${state.authUser ? "account" : "login"}" aria-label="${t("nav.account")}">${icon("user")}</button>
           <button class="primary compact join-button" data-route="join">${t("nav.join")}</button>
           <button class="icon-only menu-toggle" data-action="toggle-menu" aria-label="${t("nav.menu")}">${icon("menu")}</button>
         </div>
@@ -991,7 +1139,7 @@ function Nav() {
           ? `<div class="mobile-menu">
               ${links.map(([route, label, hasMenu]) => `<button data-route="${route}"><span>${t(label)}</span>${hasMenu ? icon("chevron") : ""}</button>`).join("")}
               <button data-action="toggle-language">${icon("globe")}${t("otherLanguage")}</button>
-              <button data-route="login">${icon("user")}${t("nav.login")}</button>
+              <button data-route="${state.authUser ? "account" : "login"}">${icon("user")}${state.authUser ? t("nav.account") : t("nav.login")}</button>
               <button class="primary" data-route="join">${t("nav.join")}</button>
             </div>`
           : ""
@@ -1380,14 +1528,15 @@ function AuthPage() {
       <section class="auth-panel auth-card">
         <img class="auth-logo-mark" src="./src/assets/logo-mark.svg" alt="${t("brandAlt")}" />
         <h1>${isLogin ? t("auth.loginTitle") : t("auth.registerTitle")}</h1>
+        ${!firebaseReady ? `<p class="auth-notice">${t("auth.configuredRequired")}</p>` : ""}
         <form class="auth-form" data-form="auth">
           ${!isLogin ? `<input class="auth-field" name="name" placeholder="${t("auth.name")}" required />` : ""}
-          <input class="auth-field" name="email" type="email" value="${isLogin ? "topbuilder@gmail.com" : ""}" placeholder="${t("auth.email")}" required />
+          <input class="auth-field" name="email" type="email" placeholder="${t("auth.email")}" autocomplete="email" required />
           <label class="password-field">
-            <input name="password" type="${state.passwordVisible ? "text" : "password"}" value="${isLogin ? "topbuilder" : ""}" placeholder="${t("auth.password")}" required />
+            <input name="password" type="${state.passwordVisible ? "text" : "password"}" placeholder="${t("auth.password")}" autocomplete="${isLogin ? "current-password" : "new-password"}" required />
             <button type="button" data-action="toggle-password" aria-label="${state.passwordVisible ? t("auth.hidePassword") : t("auth.showPassword")}">${icon("eye")}</button>
           </label>
-          ${!isLogin ? `<input class="auth-field" name="confirm" type="${state.passwordVisible ? "text" : "password"}" placeholder="${t("auth.confirmPassword")}" required />` : ""}
+          ${!isLogin ? `<input class="auth-field" name="confirm" type="${state.passwordVisible ? "text" : "password"}" placeholder="${t("auth.confirmPassword")}" autocomplete="new-password" required />` : ""}
           ${
             isLogin
               ? `<div class="auth-meta-row">
@@ -1396,10 +1545,10 @@ function AuthPage() {
                 </div>`
               : `<label class="check-row auth-agree"><input type="checkbox" required /><span>${t("auth.agree")}</span></label>`
           }
-          <button class="primary auth-submit" type="submit">${isLogin ? t("auth.login") : t("auth.register")}</button>
+          <button class="primary auth-submit" type="submit" ${state.authPending ? "disabled" : ""}>${state.authPending ? t("auth.working") : isLogin ? t("auth.login") : t("auth.register")}</button>
         </form>
         <div class="auth-divider"></div>
-        <button class="google-button" type="button"><span>G</span>${t("auth.google")}</button>
+        <button class="google-button" type="button" data-action="google-login" ${state.authPending ? "disabled" : ""}><span>G</span>${t("auth.google")}</button>
         <p class="auth-switch">
           ${isLogin ? t("auth.noAccount") : t("auth.hasAccount")}
           <button type="button" data-auth-mode="${isLogin ? "register" : "login"}">${isLogin ? t("auth.freeSignup") : t("auth.login")}</button>
@@ -1413,13 +1562,24 @@ function AuthPage() {
 
 function AccountPage() {
   const tabs = ["saved", "messages", "profile"];
+  const user = state.authUser;
+  const profile = state.userProfile || {};
+  const name = profile.name || displayNameFromUser(user);
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(user?.email || "");
   return `
     <main class="page-shell account-layout">
       <aside class="account-sidebar">
-        <div class="account-avatar">S</div>
-        <h1>Sandy</h1>
-        <p>Toronto · ${t("account.owner")}</p>
+        ${
+          user?.photoURL
+            ? `<img class="account-avatar image-avatar" src="${escapeAttr(user.photoURL)}" alt="${escapeAttr(name)}" />`
+            : `<div class="account-avatar">${userInitial(user)}</div>`
+        }
+        <h1>${safeName}</h1>
+        <p>${t("account.signedInAs")} · ${t("account.owner")}</p>
+        <p class="account-email">${safeEmail}</p>
         ${tabs.map((tab) => `<button class="${state.accountTab === tab ? "active" : ""}" data-account-tab="${tab}">${t(`account.${tab}`)}</button>`).join("")}
+        <button class="account-signout" data-action="logout">${t("account.signOut")}</button>
       </aside>
       <section class="account-content">
         <h2>${state.accountTab === "saved" ? t("account.savedTitle") : t(`account.${state.accountTab}`)}</h2>
@@ -1432,7 +1592,16 @@ function AccountPage() {
 function AccountPanel() {
   if (state.accountTab === "messages") return `<div class="content-panel"><p>${t("account.messagesCopy")}</p></div>`;
   if (state.accountTab === "profile") {
-    return `<form class="content-panel form-stack"><input class="field" value="Sandy" /><input class="field" value="sandy@example.com" /><input class="field" value="M2K 1A1" /><button class="primary">${t("account.saveProfile")}</button></form>`;
+    const user = state.authUser;
+    const profile = state.userProfile || {};
+    return `
+      <form class="content-panel form-stack" data-form="profile">
+        <label class="field-label">${t("account.name")}<input class="field" name="name" value="${escapeAttr(profile.name || displayNameFromUser(user))}" required /></label>
+        <label class="field-label">${t("account.email")}<input class="field" value="${escapeAttr(user?.email || "")}" disabled /></label>
+        <label class="field-label">${t("account.provider")}<input class="field" value="${escapeAttr(profile.provider || authProviderLabel(user))}" disabled /></label>
+        <button class="primary">${t("account.saveProfile")}</button>
+      </form>
+    `;
   }
   return `<div class="contractor-grid compact-grid">${contractors.slice(0, 2).map(ContractorCard).join("")}</div>`;
 }
@@ -1623,6 +1792,10 @@ function Toast() {
 
 function render() {
   document.documentElement.lang = state.lang === "en" ? "en" : "zh-Hans";
+  if (state.route === "account" && state.authReady && !state.authUser) {
+    state.route = "login";
+    window.location.hash = "login";
+  }
   const routes = {
     home: HomePage,
     search: SearchPage,
@@ -1775,7 +1948,60 @@ function bindEvents() {
 
   app.querySelectorAll("[data-form='auth']").forEach((form) => form.addEventListener("submit", (event) => {
     event.preventDefault();
-    setRoute("account");
+    const formData = new FormData(form);
+    const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
+    const name = String(formData.get("name") || "").trim();
+    const confirm = String(formData.get("confirm") || "");
+
+    if (state.authMode === "register" && password !== confirm) {
+      setToast(t("auth.passwordMismatch"));
+      return;
+    }
+
+    runAuthAction(async () => {
+      const credential = state.authMode === "login"
+        ? await signInWithEmailAndPassword(auth, email, password)
+        : await createUserWithEmailAndPassword(auth, email, password);
+      if (state.authMode === "register" && name) {
+        await updateProfile(credential.user, { displayName: name });
+      }
+      state.userProfile = await saveUserProfile(credential.user, { name: name || credential.user.displayName || email.split("@")[0] });
+      setToast(state.authMode === "login" ? t("auth.loginSuccess") : t("auth.registerSuccess"));
+      setRoute("account");
+    });
+  }));
+
+  app.querySelectorAll("[data-action='google-login']").forEach((button) => button.addEventListener("click", () => {
+    runAuthAction(async () => {
+      const credential = await signInWithPopup(auth, googleProvider);
+      state.userProfile = await saveUserProfile(credential.user);
+      setToast(t("auth.googleSuccess"));
+      setRoute("account");
+    });
+  }));
+
+  app.querySelectorAll("[data-action='logout']").forEach((button) => button.addEventListener("click", () => {
+    runAuthAction(async () => {
+      await signOut(auth);
+      state.authUser = null;
+      state.userProfile = null;
+      setToast(t("auth.logoutSuccess"));
+      setRoute("home");
+    });
+  }));
+
+  app.querySelectorAll("[data-form='profile']").forEach((form) => form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const formData = new FormData(form);
+    const name = String(formData.get("name") || "").trim();
+    runAuthAction(async () => {
+      if (name && state.authUser) {
+        await updateProfile(state.authUser, { displayName: name });
+        state.userProfile = await saveUserProfile(state.authUser, { name });
+      }
+      setToast(t("account.profileSaved"));
+    });
   }));
 
   app.querySelectorAll("[data-form='join']").forEach((form) => form.addEventListener("submit", (event) => {
@@ -1790,7 +2016,13 @@ function bindEvents() {
   }));
 
   const reset = $("[data-action='reset']", app);
-  if (reset) reset.addEventListener("click", () => setToast(t("auth.resetSent")));
+  if (reset) reset.addEventListener("click", () => {
+    const email = String($("input[name='email']", app)?.value || "").trim();
+    runAuthAction(async () => {
+      await sendPasswordResetEmail(auth, email);
+      setToast(t("auth.resetSent"));
+    });
+  });
 }
 
 window.addEventListener("hashchange", () => {
@@ -1801,5 +2033,21 @@ window.addEventListener("hashchange", () => {
     render();
   }
 });
+
+if (auth) {
+  onAuthStateChanged(auth, async (user) => {
+    state.authUser = user;
+    try {
+      state.userProfile = user ? await loadUserProfile(user) : null;
+    } catch (error) {
+      state.userProfile = null;
+      setToast(mapAuthError(error));
+    }
+    state.authReady = true;
+    render();
+  });
+} else {
+  state.authReady = true;
+}
 
 render();

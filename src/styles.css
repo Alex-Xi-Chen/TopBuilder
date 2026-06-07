@@ -1144,6 +1144,24 @@ h3 {
   font-size: 24px;
 }
 
+.image-avatar {
+  object-fit: cover;
+  padding: 0;
+}
+
+.account-email {
+  word-break: break-word;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.account-signout {
+  margin-top: 12px;
+  color: #b42318;
+  border-color: rgba(180, 35, 24, 0.18);
+  background: rgba(180, 35, 24, 0.04);
+}
+
 .contractor-body {
   display: grid;
   gap: 12px;
@@ -1477,6 +1495,17 @@ h3 {
   gap: 12px;
 }
 
+.auth-notice {
+  margin: -6px 0 18px;
+  border: 1px solid rgba(255, 173, 36, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 173, 36, 0.1);
+  color: #7a4b00;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .auth-field,
 .password-field input {
   width: 100%;
@@ -1574,6 +1603,14 @@ h3 {
   box-shadow: 5px 5px 0 rgba(17, 24, 39, 0.16);
 }
 
+.google-button:disabled,
+.auth-submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+  box-shadow: none;
+}
+
 .google-button span {
   color: #4285f4;
   font-weight: 900;
@@ -1651,6 +1688,14 @@ h3 {
   align-items: center;
   gap: 10px;
   color: var(--muted);
+}
+
+.field-label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 760;
 }
 
 .wide {
