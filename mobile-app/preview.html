@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TopBuilder Mobile Preview</title>
+    <style>
+      :root {
+        --ink: #111827;
+        --muted: #667085;
+        --paper: #fff;
+        --faint: #f7f4ee;
+        --canvas: #fbf8f2;
+        --warm: #fff3dc;
+        --line: #ece8df;
+        --brand: #ffad24;
+        --brand-dark: #f7941d;
+        --shadow: 0 14px 34px rgba(17, 24, 39, .12);
+        --soft-shadow: 0 8px 24px rgba(17, 24, 39, .08);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: #8f8f8f;
+        display: grid;
+        place-items: center;
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      button, input, textarea { font: inherit; }
+      button { cursor: pointer; }
+      .phone {
+        width: min(414px, 100vw);
+        height: min(896px, 100vh);
+        background: var(--canvas);
+        display: grid;
+        grid-template-rows: 68px 1fr;
+        overflow: hidden;
+        box-shadow: 0 24px 80px rgba(17, 24, 39, .28);
+        position: relative;
+      }
+      header, nav {
+        background: transparent;
+        border-color: var(--line);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+      .brand { display: flex; align-items: center; color: var(--brand-dark); font-weight: 900; }
+      .brand img { width: 132px; height: 32px; object-fit: contain; }
+      .lang {
+        height: 36px;
+        border: 0;
+        border-radius: 999px;
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+        font-weight: 800;
+        box-shadow: var(--soft-shadow);
+      }
+      main { overflow-y: auto; padding: 18px 18px 104px; }
+      nav {
+        position: absolute;
+        left: 14px;
+        right: 14px;
+        bottom: 12px;
+        height: 68px;
+        border-radius: 999px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+        padding: 0 6px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+      }
+      nav button {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        display: grid;
+        place-content: center;
+        gap: 4px;
+        border-radius: 999px;
+      }
+      nav button.active { color: var(--brand-dark); }
+      h1, h2, h3, p { margin: 0; }
+      h1 { font-size: 29px; line-height: 1.18; }
+      h2 { font-size: 21px; line-height: 1.22; }
+      h3 { font-size: 17px; line-height: 1.25; }
+      p { color: var(--muted); line-height: 1.55; }
+      .stack { display: grid; gap: 16px; }
+      .tight { display: grid; gap: 10px; }
+      .eyebrow { color: var(--brand-dark); font-size: 12px; font-weight: 900; text-transform: uppercase; }
+      .hero-card, .auth-card {
+        border: 0;
+        border-radius: 28px;
+        background: var(--warm);
+        padding: 22px;
+        box-shadow: var(--shadow);
+      }
+      .hero-copy { color: var(--ink); font-weight: 800; font-size: 16px; }
+      .image-wide { width: 100%; height: 214px; object-fit: cover; border-radius: 24px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .service {
+        min-height: 92px;
+        border: 0;
+        border-radius: 22px;
+        background: #fff;
+        padding: 14px;
+        display: grid;
+        align-content: space-between;
+        box-shadow: var(--soft-shadow);
+        text-align: left;
+      }
+      .expert {
+        border: 0;
+        border-radius: 26px;
+        background: #fff;
+        padding: 16px;
+        display: grid;
+        gap: 14px;
+        box-shadow: var(--soft-shadow);
+      }
+      .advisor { border: 0; border-radius: 24px; background: var(--faint); padding: 12px; display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: center; }
+      .advisor img { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .stat { border: 0; border-radius: 18px; background: var(--faint); padding: 10px; }
+      .stat strong { display: block; font-size: 18px; }
+      .stat span { color: var(--muted); font-size: 11px; font-weight: 700; }
+      .chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+      .chip { flex: 0 0 auto; border: 0; border-radius: 999px; background: #fff; padding: 10px 14px; font-weight: 800; }
+      .chip.active { background: var(--ink); color: #fff; }
+      .field { min-height: 52px; border: 0; border-radius: 26px; background: #fff; display: flex; align-items: center; gap: 10px; padding: 0 16px; box-shadow: var(--soft-shadow); }
+      .field input, .field textarea { border: 0; outline: 0; width: 100%; }
+      .segment { display: grid; grid-template-columns: repeat(3, 1fr); border: 0; border-radius: 999px; background: var(--faint); padding: 4px; }
+      .segment button { min-height: 42px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 800; }
+      .segment button.active { background: #fff; color: var(--ink); box-shadow: var(--soft-shadow); }
+      .card { border: 0; border-radius: 26px; background: #fff; overflow: hidden; box-shadow: var(--soft-shadow); }
+      .card-body { padding: 14px; display: grid; gap: 12px; }
+      .thumb { width: 100%; height: 164px; object-fit: cover; display: block; }
+      .row { display: flex; gap: 12px; align-items: flex-start; }
+      .between { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+      .rating { color: var(--brand-dark); font-weight: 900; white-space: nowrap; }
+      .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+      .tag { border-radius: 999px; background: var(--faint); color: var(--muted); padding: 6px 10px; font-size: 12px; font-weight: 700; }
+      .actions { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+      .btn {
+        min-height: 50px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--brand);
+        box-shadow: var(--shadow);
+        font-weight: 900;
+        padding: 0 14px;
+      }
+      .ghost { min-height: 50px; border: 0; border-radius: 999px; background: #fff; padding: 0 14px; font-weight: 900; box-shadow: var(--soft-shadow); }
+      .project-row { display: flex; gap: 12px; overflow-x: auto; }
+      .project { flex: 0 0 220px; border: 0; border-radius: 22px; background: #fff; overflow: hidden; box-shadow: var(--soft-shadow); }
+      .project img { width: 100%; height: 132px; object-fit: cover; display: block; }
+      .project div { padding: 12px; display: grid; gap: 4px; }
+      .review, .faq, .info-card, .message, .resource-group { border: 0; border-radius: 22px; background: #fff; padding: 14px; display: grid; gap: 8px; box-shadow: var(--soft-shadow); }
+      .stars { color: var(--brand-dark); font-weight: 900; }
+      .photo-cta { min-height: 220px; border: 0; border-radius: 28px; overflow: hidden; background: linear-gradient(rgba(17,24,39,.28), rgba(17,24,39,.4)), url("./assets/project-addition.png") center/cover; padding: 16px; display: grid; align-content: end; gap: 10px; box-shadow: var(--soft-shadow); }
+      .photo-cta h2, .photo-cta p { color: #fff; }
+      .article-row { border: 0; border-radius: 22px; background: #fff; padding: 12px; display: grid; grid-template-columns: 106px 1fr; gap: 12px; text-align: left; box-shadow: var(--soft-shadow); }
+      .article-row img { width: 106px; height: 92px; border-radius: 18px; object-fit: cover; }
+      .article-hero { width: 100%; height: 230px; object-fit: cover; border-radius: 26px; }
+      .featured { border: 0; border-radius: 24px; background: var(--warm); padding: 12px; display: grid; grid-template-columns: 108px 1fr; gap: 12px; box-shadow: var(--soft-shadow); }
+      .featured img { width: 108px; height: 112px; border-radius: 18px; object-fit: cover; }
+      .pagination { display: flex; align-items: center; justify-content: space-between; }
+      .pagination button { min-height: 40px; border: 0; border-radius: 999px; background: #fff; padding: 0 14px; font-weight: 800; box-shadow: var(--soft-shadow); }
+      .profile-hero { width: 100%; height: 235px; object-fit: cover; border-radius: 28px; }
+      .tabs { display: grid; grid-template-columns: repeat(4, 1fr); border: 0; border-radius: 999px; background: var(--faint); padding: 4px; }
+      .tabs button { min-height: 38px; border: 0; border-radius: 999px; background: transparent; font-size: 12px; color: var(--muted); font-weight: 800; }
+      .tabs button.active { background: #fff; color: var(--ink); box-shadow: var(--soft-shadow); }
+      .account-hero { border: 0; border-radius: 26px; background: var(--warm); padding: 16px; display: flex; align-items: center; gap: 14px; box-shadow: var(--soft-shadow); }
+      .avatar { width: 58px; height: 58px; border-radius: 50%; background: var(--brand); display: grid; place-items: center; font-size: 24px; font-weight: 900; }
+      .resource-link { min-height: 44px; border: 0; border-top: 1px solid var(--line); background: #fff; display: flex; align-items: center; justify-content: space-between; font-weight: 800; color: var(--muted); width: 100%; }
+      .auth-card input, .auth-card textarea { height: 52px; border: 0; border-radius: 18px; background: var(--faint); padding: 0 14px; }
+      .auth-card textarea { height: 96px; padding-top: 12px; }
+      .auth-img { width: 100%; height: 210px; object-fit: contain; }
+      .back { border: 0; background: transparent; font-weight: 900; padding: 8px 0; text-align: left; }
+      .toast { position: absolute; left: 18px; right: 18px; bottom: 92px; min-height: 46px; border-radius: 999px; background: var(--ink); color: #fff; display: none; place-items: center; font-weight: 900; }
+      .toast.show { display: grid; }
+    </style>
+  </head>
+  <body>
+    <div class="phone">
+      <header>
+        <div class="brand"><img src="./assets/logo.png" alt="TopBuilder" /></div>
+        <button class="lang" data-lang>◎ EN</button>
+      </header>
+      <main id="app"></main>
+      <nav id="tabs"></nav>
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+      const img = {
+        hero: "./assets/hero-renovation.png",
+        addition: "./assets/project-addition.png",
+        basement: "./assets/project-basement.png",
+        bathroom: "./assets/project-bathroom.png",
+        commercial: "./assets/project-commercial.png",
+        advisor: "./assets/advisor-portrait.png",
+        auth: "./assets/auth-illustration.png"
+      };
+      const services = [
+        ["home", "Home renovation", "住宅装修", "⌂"],
+        ["kitchen", "Kitchen remodel", "厨房翻新", "☕"],
+        ["bathroom", "Bathroom remodel", "浴室改造", "◌"],
+        ["basement", "Basement finish", "地下室装修", "▤"],
+        ["addition", "New build & addition", "新建与加建", "▥"],
+        ["commercial", "Commercial project", "商业项目", "▣"]
+      ];
+      const contractors = [
+        ["m2", "M2 Tile & Stone", "Markham", 5.0, 128, ["kitchen","bathroom","commercial"], "bathroom", "Tile and stone specialist", "瓷砖与石材承包商", "Detail-focused tile, stone, and waterproofing work.", "专注瓷砖、石材和湿区防水。"],
+        ["northline", "Northline Build Co.", "Toronto", 4.9, 94, ["addition","basement","home"], "addition", "Addition and structural renovation", "加建与结构改造", "A practical team for additions and layout changes.", "适合加建和格局改造的实用团队。"],
+        ["clearspace", "Clearspace Renovation", "Richmond Hill", 4.8, 76, ["home","kitchen","bathroom"], "hero", "Whole-home renovation team", "全屋翻新团队", "Clear scopes, clean finishes, and stage updates.", "清晰报价、精细收口和阶段同步。"],
+        ["oakridge", "Oakridge Commercial", "Mississauga", 4.7, 63, ["commercial","home","addition"], "commercial", "Commercial build-out contractor", "商业空间施工", "Office, retail, and hospitality renovations.", "办公室、零售和餐饮空间改造。"]
+      ];
+      const posts = [
+        ["adu", "addition", "addition", "How to plan an ADU that fits your property", "挑选适合设计公司的五个标准", "A practical guide to layout, permits, privacy, and construction coordination.", "从户型、许可、隐私和施工协调角度梳理重点。", 6, "2.4k"],
+        ["cafe", "commercial", "commercial", "Cafe build-out checklist before opening", "咖啡店开业前施工检查清单", "Confirm millwork, lighting, inspections, equipment clearances, and handoff.", "确认木作、灯光、检查、设备间距和交付清单。", 5, "1.8k"],
+        ["kitchen", "kitchen", "hero", "Small kitchen, smarter storage", "小厨房的高效收纳", "Cabinet planning and appliance placement for compact kitchens.", "通过橱柜规划和电器位置改善紧凑厨房。", 4, "980"],
+        ["basement", "basement", "basement", "Basement suite planning checklist", "地下室套房规划清单", "Ceiling height, egress, moisture, sound separation, and permits.", "层高、逃生窗、防潮、隔音和许可沟通。", 5, "740"],
+        ["bath", "bathroom", "bathroom", "Bathroom waterproofing questions to ask", "浴室防水需要问清的问题", "Compare waterproofing scope, tile prep, slope, drains, and warranty.", "比较防水范围、基层、坡度、地漏和保修。", 4, "620"],
+        ["budget", "home", "hero", "Where whole-home budgets usually move", "全屋翻新预算常见变化点", "The line items that change most often during large renovations.", "大型装修中最容易变化的费用项。", 7, "1.1k"]
+      ];
+      const i18n = {
+        en: {
+          lang: "中文", tabs: ["Home","Search","Community","Profile","Account"], hero: "Complete renovation guidance and support", heroCopy: "Your trusted partner on the home improvement journey.", find: "Find contractors", services: "Popular project types", expert: "Build with verified local experts", expertCopy: "Compare project history, homeowner reviews, and clear service coverage.", projects: "Selected project references", reviews: "Clear reviews before you choose", stories: "Renovation stories", searchTitle: "Find local professionals", all: "All services", sort: ["Recommended","Highest rated","Most reviewed"], results: "contractors match your project", read: "Read article", related: "Related articles", previous: "Previous", next: "Next", account: "Welcome to TopBuilder", accountCopy: "Save contractors, compare ideas, and manage conversations.", login: "Log in", signup: "Sign up", logout: "Log out", signedIn: "Signed in with real TopBuilder account data.", resources: "Resources", saved: "Saved", messages: "Messages", profile: "Profile", join: "Join TopBuilder", contact: "Contact", submit: "Submit", sent: "Submitted. We will follow up soon.", reset: "Password reset email sent.", google: "Google sign-in needs native iOS OAuth credentials."
+        },
+        zh: {
+          lang: "EN", tabs: ["首页","搜索","社区","主页","账户"], hero: "提供全面的装修指导和支持", heroCopy: "我们是您家装路上的得力伙伴。", find: "寻找承包商", services: "热门项目类型", expert: "与认证本地专家一起推进项目", expertCopy: "比较真实项目记录、屋主评价和清晰的服务范围。", projects: "精选项目参考", reviews: "选择前先看清真实评价", stories: "装修攻略", searchTitle: "寻找本地专业团队", all: "全部服务", sort: ["推荐","评分最高","评价最多"], results: "个匹配承包商", read: "阅读文章", related: "相关文章", previous: "上一页", next: "下一页", account: "欢迎使用 TopBuilder", accountCopy: "收藏承包商、比较项目灵感并管理沟通。", login: "登录", signup: "注册", logout: "退出登录", signedIn: "已使用真实 TopBuilder 账户数据登录。", resources: "资源", saved: "收藏", messages: "消息", profile: "资料", join: "承包商入驻", contact: "联系我们", submit: "提交", sent: "已提交，我们会尽快联系您。", reset: "密码重置邮件已发送。", google: "Google 登录需要原生 iOS OAuth 配置。"
+        }
+      };
+      const state = { lang: "en", tab: "home", service: "", sort: 0, post: null, page: 1, profileTab: "projects", accountMode: "welcome", accountTab: "saved", signedIn: false, user: { name: "Sandy", email: "sandy@example.com", postal: "M2K 1A1" }, contractor: contractors[0] };
+      const t = () => i18n[state.lang];
+      const sLabel = (id) => { const s = services.find(x => x[0] === id) || services[0]; return state.lang === "en" ? s[1] : s[2]; };
+      const cTitle = (c) => state.lang === "en" ? c[7] : c[8];
+      const cBlurb = (c) => state.lang === "en" ? c[9] : c[10];
+      const pTitle = (p) => state.lang === "en" ? p[3] : p[4];
+      const pText = (p) => state.lang === "en" ? p[5] : p[6];
+      const app = document.querySelector("#app");
+      const tabs = document.querySelector("#tabs");
+      const toast = document.querySelector("#toast");
+
+      function showToast(text) {
+        toast.textContent = text;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 1600);
+      }
+      function go(tab) { state.tab = tab; state.post = null; render(); }
+      function chooseService(id) {
+        state.service = id;
+        go("search");
+      }
+      function openProfile(id) {
+        state.contractor = contractors.find(c => c[0] === id) || contractors[0];
+        state.profileTab = "projects";
+        go("profile");
+      }
+
+      function contractorCard(c) {
+        return `<article class="card">
+          <button class="thumb-btn" data-profile="${c[0]}" style="border:0;padding:0;background:transparent"><img class="thumb" src="${img[c[6]]}" alt=""></button>
+          <div class="card-body">
+            <div class="between"><div><h3>${c[1]}</h3><p>${cTitle(c)} · ${c[2]}</p></div><span class="rating">★ ${c[3].toFixed(1)}</span></div>
+            <p>${cBlurb(c)}</p>
+            <div class="tags">${c[5].slice(0,3).map(x => `<span class="tag">${sLabel(x)}</span>`).join("")}</div>
+            <div class="actions"><button class="btn" data-profile="${c[0]}">${t().profile}</button><button class="ghost" data-toast>${t().contact}</button></div>
+          </div>
+        </article>`;
+      }
+      function articleRow(p) {
+        return `<button class="article-row" data-post="${p[0]}"><img src="${img[p[2]]}" alt=""><div><span class="eyebrow">${sLabel(p[1])}</span><h3>${pTitle(p)}</h3><p>${p[7]} ${state.lang === "en" ? "min read" : "分钟阅读"} · ${p[8]}</p></div></button>`;
+      }
+
+      function home() {
+        return `<section class="stack">
+          <div class="hero-card tight"><span class="eyebrow">TopBuilder</span><h1>${t().hero}</h1><p class="hero-copy">${t().heroCopy}</p>
+            <button class="btn" data-tab="search">⌕ ${t().find}</button>
+          </div>
+          <img class="image-wide" src="${img.hero}" alt="">
+          <div class="tight"><span class="eyebrow">${state.lang === "en" ? "What are you planning?" : "您正在计划什么项目？"}</span><h2>${t().services}</h2></div>
+          <div class="grid">${services.map(x => `<button class="service" data-service="${x[0]}"><span>${x[3]}</span><strong>${sLabel(x[0])}</strong></button>`).join("")}</div>
+          <section class="expert"><div class="tight"><span class="eyebrow">${t().expert}</span><p>${t().expertCopy}</p><div class="stats"><div class="stat"><strong>1:1</strong><span>support</span></div><div class="stat"><strong>200+</strong><span>pros</span></div><div class="stat"><strong>4000+</strong><span>reviews</span></div></div></div><div class="advisor"><img src="${img.advisor}" alt=""><div><h3>Daniel Lin</h3><p>${state.lang === "en" ? "Senior renovation advisor" : "高级装修顾问"}</p></div></div></section>
+          <h2>${t().projects}</h2><div class="project-row">${["hero","bathroom","addition","basement"].map((key, i) => `<article class="project"><img src="${img[key]}" alt=""><div><strong>${sLabel(services[i + 1]?.[0] || "home")}</strong><p>Toronto · $${[42,19,180,68][i]}k · ${[7,4,18,9][i]}w</p></div></article>`).join("")}</div>
+          <h2>${t().reviews}</h2><article class="review"><span class="stars">★★★★★</span><p>${state.lang === "en" ? "The scope was clear, communication was fast, and the finish matched what we approved." : "报价范围清楚，沟通及时，最终效果和确认方案一致。"}</p><strong>Sandy W.</strong></article>
+          <section class="photo-cta"><h2>${state.lang === "en" ? "Ready to plan your next project?" : "准备开始规划项目？"}</h2><p>${state.lang === "en" ? "Share your scope and compare the right local professionals." : "分享您的需求，比较合适的本地专业团队。"}</p><button class="btn" data-tab="search">${t().find}</button></section>
+          ${contractors.slice(0, 2).map(contractorCard).join("")}
+        </section>`;
+      }
+      function search() {
+        let list = contractors.filter(c => !state.service || c[5].includes(state.service));
+        if (state.sort === 1) list = list.slice().sort((a,b) => b[3] - a[3]);
+        if (state.sort === 2) list = list.slice().sort((a,b) => b[4] - a[4]);
+        return `<section class="stack"><div class="tight"><span class="eyebrow">${t().tabs[1]}</span><h1>${t().searchTitle}</h1><p>${state.lang === "en" ? "Filter by service, compare profiles, and contact the team that fits your project." : "按服务筛选、比较主页，并联系适合您项目的团队。"}</p></div><div class="field">⌕ <input value="${state.service ? sLabel(state.service) : ""}" placeholder="${state.lang === "en" ? "Project type" : "项目类型"}"></div><div class="field">⌾ <input value="90017"></div><div class="chips"><button class="chip ${!state.service ? "active" : ""}" data-filter="">${t().all}</button>${services.map(x => `<button class="chip ${state.service === x[0] ? "active" : ""}" data-filter="${x[0]}">${sLabel(x[0])}</button>`).join("")}</div><div class="segment">${t().sort.map((x,i) => `<button class="${state.sort === i ? "active" : ""}" data-sort="${i}">${x}</button>`).join("")}</div><p><strong>${list.length}</strong> ${t().results}</p>${list.map(contractorCard).join("")}</section>`;
+      }
+      function community() {
+        if (state.post) {
+          const p = posts.find(x => x[0] === state.post) || posts[0];
+          return `<section class="stack"><button class="back" data-post="">← ${state.lang === "en" ? "Back" : "返回"}</button><span class="eyebrow">${t().tabs[2]}</span><h1>${pTitle(p)}</h1><p>TopBuilder Editorial · ${p[7]} ${state.lang === "en" ? "min read" : "分钟阅读"} · ${p[8]} ${state.lang === "en" ? "views" : "浏览"}</p><img class="article-hero" src="${img[p[2]]}" alt=""><p class="hero-copy">${pText(p)}</p><article class="info-card"><h3>1. ${state.lang === "en" ? "Start with constraints" : "先确认限制"}</h3><p>${state.lang === "en" ? "Confirm budget, access, inspection needs, and schedule assumptions before choosing finishes." : "选择材料前，先确认预算、出入口、检查要求和时间假设。"}</p></article><h2>${t().related}</h2>${posts.filter(x => x[0] !== p[0]).slice(0,3).map(articleRow).join("")}</section>`;
+        }
+        const filtered = state.service ? posts.filter(p => p[1] === state.service) : posts;
+        const pages = Math.max(1, Math.ceil(filtered.length / 3));
+        state.page = Math.min(state.page, pages);
+        const visible = filtered.slice((state.page - 1) * 3, state.page * 3);
+        return `<section class="stack"><div class="tight"><span class="eyebrow">${t().tabs[2]}</span><h1>${t().stories}</h1></div><article class="featured"><img src="${img.commercial}" alt=""><div><span class="eyebrow">${state.lang === "en" ? "Featured article" : "精选文章"}</span><h3>${pTitle(posts[1])}</h3><button class="ghost" data-post="${posts[1][0]}">${t().read}</button></div></article><div class="chips"><button class="chip ${!state.service ? "active" : ""}" data-filter="">${t().all}</button>${services.map(x => `<button class="chip ${state.service === x[0] ? "active" : ""}" data-filter="${x[0]}">${sLabel(x[0])}</button>`).join("")}</div>${visible.map(articleRow).join("")}<div class="pagination"><button data-page="-1" ${state.page === 1 ? "disabled" : ""}>${t().previous}</button><strong>${state.page} / ${pages}</strong><button data-page="1" ${state.page === pages ? "disabled" : ""}>${t().next}</button></div></section>`;
+      }
+      function profile() {
+        const c = state.contractor;
+        const tabs = ["projects","reviews","about","faq"];
+        const labels = state.lang === "en" ? ["Projects","Reviews","About","FAQ"] : ["案例","评价","关于","问答"];
+        let panel = "";
+        if (state.profileTab === "projects") panel = c[5].map(id => `<article class="project" style="flex-basis:100%"><img src="${img[id] || img.hero}"><div><strong>${sLabel(id)}</strong><p>${c[2]} · $25k+ · 4w+</p></div></article>`).join("");
+        if (state.profileTab === "reviews") panel = `<article class="review"><span class="stars">★★★★★</span><p>${cBlurb(c)}</p><strong>${c[1]}</strong></article>`;
+        if (state.profileTab === "about") panel = `<article class="info-card"><h3>${state.lang === "en" ? "Company overview" : "公司介绍"}</h3><p>${state.lang === "en" ? "This team provides site review, scope planning, material guidance, and milestone updates." : "该团队提供现场评估、范围规划、材料建议和阶段同步。"}</p></article>`;
+        if (state.profileTab === "faq") panel = `<article class="faq"><strong>${state.lang === "en" ? "Do they provide estimates?" : "是否提供估价？"}</strong><p>${state.lang === "en" ? "Yes. Share your scope and preferred timeline." : "可以。请分享项目范围和期望时间。"}</p></article>`;
+        return `<section class="stack"><img class="profile-hero" src="${img[c[6]]}" alt=""><article class="card-body card"><span class="eyebrow">${c[2]}</span><h1>${c[1]}</h1><p>${cBlurb(c)}</p><div class="stats"><div class="stat"><strong>${c[3].toFixed(1)}</strong><span>Rating</span></div><div class="stat"><strong>${c[4]}</strong><span>Reviews</span></div><div class="stat"><strong>12</strong><span>Projects</span></div></div><div class="actions"><button class="btn" data-toast>${t().contact}</button><button class="ghost" data-toast>♡ ${state.lang === "en" ? "Save" : "收藏"}</button></div></article><div class="tabs">${tabs.map((x,i) => `<button class="${state.profileTab === x ? "active" : ""}" data-profile-tab="${x}">${labels[i]}</button>`).join("")}</div>${panel}</section>`;
+      }
+      function account() {
+        if (state.accountMode === "login" || state.accountMode === "signup") return auth();
+        if (state.accountMode === "join" || state.accountMode === "contact") return formPage();
+        if (state.accountMode.startsWith("info:")) return infoPage(state.accountMode.replace("info:", ""));
+        const resources = [
+          ["help", "Help center", "帮助中心", "Find answers about searching, comparing contractors, saving profiles, and starting a project request.", "了解如何搜索、比较承包商、收藏主页并发起项目需求。"],
+          ["verification", "Verification", "承包商审核", "TopBuilder reviews company details, service coverage, project history, and profile quality.", "TopBuilder 会审核公司信息、服务范围、项目历史和主页质量。"],
+          ["case", "Case studies", "案例研究", "Browse renovation stories that show scope, materials, timelines, and homeowner lessons.", "浏览装修故事，了解范围、材料、时间线和屋主经验。"],
+          ["qa", "Contractor Q&A", "承包商问答", "Learn how profiles, leads, verification, and homeowner messages work.", "了解主页、线索、审核和屋主消息如何运作。"],
+          ["team", "Our team", "关于团队", "A practical team combining renovation experience, product design, and local research.", "结合装修经验、产品设计和本地市场研究的实用团队。"],
+          ["privacy", "Privacy policy", "隐私政策", "Your project and contact details stay focused on matching and support.", "您的项目和联系信息只用于匹配和支持。"],
+          ["terms", "Terms", "服务条款", "TopBuilder helps connect homeowners and contractors; final scope and contracts stay between parties.", "TopBuilder 帮助屋主和承包商联系，最终范围和协议由双方确认。"]
+        ];
+        const accountActions = state.signedIn
+          ? `<div class="actions"><button class="ghost" data-logout>${t().logout}</button></div>`
+          : `<div class="actions"><button class="btn" data-account-mode="login">${t().login}</button><button class="ghost" data-account-mode="signup">${t().signup}</button></div>`;
+        const accountMeta = state.signedIn ? `${state.user.email} · ${state.user.postal}` : `Toronto · ${state.lang === "en" ? "Homeowner" : "屋主"}`;
+        const signedCopy = state.signedIn ? `<p><strong style="color:var(--brand-dark)">${t().signedIn}</strong></p>` : "";
+        return `<section class="stack"><article class="account-hero"><div class="avatar">${state.user.name.slice(0,1)}</div><div><h1>${state.user.name}</h1><p>${accountMeta}</p>${signedCopy}</div></article>${accountActions}<div class="tabs">${["saved","messages","profile","resources"].map(x => `<button class="${state.accountTab === x ? "active" : ""}" data-account-tab="${x}">${t()[x]}</button>`).join("")}</div>${accountPanel(resources)}</section>`;
+      }
+      function accountPanel(resources) {
+        if (state.accountTab === "saved") return contractors.slice(0,2).map(contractorCard).join("");
+        if (state.accountTab === "messages") return `<article class="message"><strong>M2 Tile & Stone</strong><p>${state.lang === "en" ? "We received your bathroom remodel request. Could you share the room size?" : "我们收到您的浴室改造需求，可以提供大概面积吗？"}</p></article><article class="message"><strong>Northline Build Co.</strong><p>${state.lang === "en" ? "Permit review may be the first planning step." : "许可审查可能是第一步。"}</p></article>`;
+        if (state.accountTab === "profile") return `<article class="auth-card tight"><input value="${state.user.name}"><input value="${state.user.email}"><input value="${state.user.postal}"><button class="btn" data-toast>${state.lang === "en" ? "Save profile" : "保存资料"}</button></article>`;
+        return `<div class="resource-group"><strong>${t().resources}</strong>${resources.map(x => `<button class="resource-link" data-info="${x[0]}">${state.lang === "en" ? x[1] : x[2]}<span>›</span></button>`).join("")}<button class="resource-link" data-account-mode="join">${t().join}<span>›</span></button><button class="resource-link" data-account-mode="contact">${t().contact}<span>›</span></button></div>`;
+      }
+      function infoPage(id) {
+        const pages = {
+          help: ["Help center", "帮助中心", "Find answers about searching, comparing contractors, saving profiles, and starting a project request.", "了解如何搜索、比较承包商、收藏主页并发起项目需求。"],
+          verification: ["Verification", "承包商审核", "TopBuilder reviews company details, service coverage, project history, and profile quality.", "TopBuilder 会审核公司信息、服务范围、项目历史和主页质量。"],
+          case: ["Case studies", "案例研究", "Browse renovation stories that show scope, materials, timelines, and homeowner lessons.", "浏览装修故事，了解范围、材料、时间线和屋主经验。"],
+          qa: ["Contractor Q&A", "承包商问答", "Learn how profiles, leads, verification, and homeowner messages work.", "了解主页、线索、审核和屋主消息如何运作。"],
+          team: ["Our team", "关于团队", "A practical team combining renovation experience, product design, and local research.", "结合装修经验、产品设计和本地市场研究的实用团队。"],
+          privacy: ["Privacy policy", "隐私政策", "Your project and contact details stay focused on matching and support.", "您的项目和联系信息只用于匹配和支持。"],
+          terms: ["Terms", "服务条款", "TopBuilder helps connect homeowners and contractors; final scope and contracts stay between parties.", "TopBuilder 帮助屋主和承包商联系，最终范围和协议由双方确认。"]
+        };
+        const page = pages[id] || pages.help;
+        const items = state.lang === "en"
+          ? ["Review the important details.", "Compare your next steps.", "Contact TopBuilder when you need support."]
+          : ["查看重要信息。", "比较下一步。", "需要支持时联系 TopBuilder。"];
+        return `<section class="stack"><button class="back" data-account-mode="welcome">← ${state.lang === "en" ? "Back" : "返回"}</button><span class="eyebrow">${t().resources}</span><h1>${state.lang === "en" ? page[0] : page[1]}</h1><p class="hero-copy">${state.lang === "en" ? page[2] : page[3]}</p>${items.map((item, index) => `<article class="info-card"><span class="eyebrow">${String(index + 1).padStart(2, "0")}</span><p>${item}</p></article>`).join("")}</section>`;
+      }
+      function auth() {
+        const login = state.accountMode === "login";
+        return `<section class="stack"><button class="back" data-account-mode="welcome">← ${state.lang === "en" ? "Back" : "返回"}</button><img class="auth-img" src="${img.auth}" alt=""><article class="auth-card tight"><img src="./assets/logo-mark.png" style="width:64px;height:58px;object-fit:contain;justify-self:center"><h1>${login ? t().login : t().signup} TopBuilder</h1>${login ? "" : `<input placeholder="${state.lang === "en" ? "Full name" : "姓名"}" value="${state.user.name}">`}<input value="${state.user.email}" placeholder="Email"><input placeholder="Password" type="password"><button class="btn" data-auth-submit>${login ? t().login : t().signup}</button><button class="ghost" data-google>G ${state.lang === "en" ? "Continue with Google" : "使用 Google 继续"}</button>${login ? `<button class="back" data-reset>${state.lang === "en" ? "Forgot password?" : "忘记密码？"}</button>` : ""}<button class="back" data-account-mode="${login ? "signup" : "login"}">${login ? t().signup : t().login}</button><p>${state.lang === "en" ? "Email sign-in uses the same Firebase project as the web app." : "邮箱登录使用与网页端相同的 Firebase 项目。"}</p></article></section>`;
+      }
+      function formPage() {
+        const join = state.accountMode === "join";
+        return `<section class="stack"><button class="back" data-account-mode="welcome">← ${state.lang === "en" ? "Back" : "返回"}</button><article class="auth-card tight"><span class="eyebrow">${t().tabs[4]}</span><h1>${join ? t().join : t().contact}</h1><input placeholder="${join ? (state.lang === "en" ? "Company name" : "公司名称") : (state.lang === "en" ? "Full name" : "姓名")}"><input placeholder="${join ? (state.lang === "en" ? "Service city" : "服务城市") : "Email"}"><textarea placeholder="${join ? (state.lang === "en" ? "Short company introduction" : "公司简介") : (state.lang === "en" ? "Message" : "留言")}"></textarea><button class="btn" data-toast>${t().submit}</button></article></section>`;
+      }
+      function render() {
+        document.querySelector("[data-lang]").textContent = `◎ ${t().lang}`;
+        const renderers = { home, search, community, profile, account };
+        app.innerHTML = renderers[state.tab]();
+        tabs.innerHTML = ["home","search","community","profile","account"].map((x,i) => `<button class="${state.tab === x ? "active" : ""}" data-tab="${x}"><span>${["⌂","⌕","▤","⚒","○"][i]}</span>${t().tabs[i]}</button>`).join("");
+      }
+      document.addEventListener("click", (event) => {
+        const el = event.target.closest("button");
+        if (!el) return;
+        if (el.dataset.tab) go(el.dataset.tab);
+        if (el.dataset.service !== undefined) chooseService(el.dataset.service);
+        if (el.dataset.filter !== undefined) { state.service = el.dataset.filter; state.page = 1; render(); }
+        if (el.dataset.sort) { state.sort = Number(el.dataset.sort); render(); }
+        if (el.dataset.profile) openProfile(el.dataset.profile);
+        if (el.dataset.post !== undefined) { state.post = el.dataset.post || null; render(); }
+        if (el.dataset.page) { state.page += Number(el.dataset.page); render(); }
+        if (el.dataset.profileTab) { state.profileTab = el.dataset.profileTab; render(); }
+        if (el.dataset.accountTab) { state.accountTab = el.dataset.accountTab; render(); }
+        if (el.dataset.accountMode) { state.accountMode = el.dataset.accountMode; render(); }
+        if (el.dataset.authSubmit !== undefined) { state.signedIn = true; state.accountMode = "welcome"; state.accountTab = "profile"; showToast(state.lang === "en" ? "You are signed in." : "您已登录。"); render(); }
+        if (el.dataset.logout !== undefined) { state.signedIn = false; state.accountTab = "resources"; showToast(t().logout); render(); }
+        if (el.dataset.reset !== undefined) showToast(t().reset);
+        if (el.dataset.google !== undefined) showToast(t().google);
+        if (el.dataset.toast !== undefined) showToast(t().sent || "Done");
+        if (el.dataset.info !== undefined) { state.accountMode = `info:${el.dataset.info}`; render(); }
+        if (el.dataset.lang !== undefined) { state.lang = state.lang === "en" ? "zh" : "en"; render(); }
+      });
+      render();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "TopBuilder Home",
+    "slug": "topbuilder-mobile",
+    "version": "1.0.0",
+    "description": "TopBuilder helps homeowners compare renovation contractors, review project examples, and plan home improvement conversations with confidence.",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "topbuilder",
+    "assetBundlePatterns": [
+      "assets/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.topbuilderhome.app",
+      "buildNumber": "6",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.topbuilderhome.app",
+      "versionCode": 1
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b08066a6-34f4-4579-9891-b522920e0e82"
+      }
+    },
+    "owner": "xialexchen"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "topbuilder-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "App.js",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo start --ios",
+    "android": "expo start --android",
+    "web": "expo start --web",
+    "doctor": "expo-doctor"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "babel-preset-expo": "~56.0.0",
+    "expo": "~56.0.11",
+    "expo-font": "~56.0.6",
+    "firebase": "^12.14.0",
+    "react": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-svg": "15.15.4"
+  },
+  "devDependencies": {
+    "expo-doctor": "^1.17.11"
+  }
+}
